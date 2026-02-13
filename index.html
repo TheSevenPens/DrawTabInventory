@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drawing Tablet Inventory</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+
+        h2 {
+            color: #34495e;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 10px;
+            margin-top: 40px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #2c3e50;
+            color: white;
+            font-weight: bold;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .error {
+            color: red;
+            font-weight: bold;
+            text-align: center;
+            padding: 20px;
+            background: #ffe6e6;
+            border: 1px solid #ffcccc;
+            border-radius: 5px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .loading {
+            text-align: center;
+            font-style: italic;
+            color: #666;
+        }
+
+        /* Tab Styles */
+        .tabs {
+            overflow: hidden;
+            border-bottom: 1px solid #ccc;
+            margin-bottom: 20px;
+        }
+
+        .tab-button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+            font-size: 17px;
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+        }
+
+        .tab-button:hover {
+            background-color: #ddd;
+        }
+
+        .tab-button.active {
+            background-color: #ccc;
+            font-weight: bold;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 6px 12px;
+            border: 1px solid #ccc;
+            border-top: none;
+            animation: fadeEffect 1s;
+        }
+
+        @keyframes fadeEffect {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .controls {
+            margin-bottom: 5px;
+            text-align: right;
+        }
+
+        select {
+            padding: 8px;
+            font-size: 16px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Drawing Tablet Inventory</h1>
+
+    <div id="error-message" class="error"></div>
+    <div id="loading-message" class="loading">Loading inventory data...</div>
+
+    <div id="content" style="display: none;">
+        <div class="controls">
+            <label for="sortOrder">Sort by:</label>
+            <select id="sortOrder">
+                <option value="brand">Brand</option>
+                <option value="modelId">Model ID</option>
+                <option value="date">Order Date</option>
+            </select>
+            <select id="sortDirection">
+                <option value="asc">Ascending</option>
+                <option value="desc">Descending</option>
+            </select>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-button" onclick="openTab(event, 'Tablets')" id="defaultOpen">Tablets</button>
+            <button class="tab-button" onclick="openTab(event, 'Pens')">Pens</button>
+        </div>
+
+        <div id="Tablets" class="tab-content">
+            <table id="tablets-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Brand</th>
+                        <th>Model Name</th>
+                        <th>Model ID</th>
+                        <th>Type</th>
+                        <th>Inventory ID</th>
+                        <th>Vendor</th>
+                        <th>Order Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Rows will be inserted here -->
+                </tbody>
+            </table>
+        </div>
+
+        <div id="Pens" class="tab-content">
+            <table id="pens-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Brand</th>
+                        <th>Pen Name</th>
+                        <th>Technology</th>
+                        <th>Subtype</th>
+                        <th>Inventory ID</th>
+                        <th>With Tablet</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Rows will be inserted here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let inventoryData = { Tablets: [], Pens: [] };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const dbPath = 'db/7p_drawtab_inventory.json';
+
+            fetch(dbPath)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    inventoryData = data;
+                    applySort(); // Initial render with default sort
+
+                    document.getElementById('loading-message').style.display = 'none';
+                    document.getElementById('content').style.display = 'block';
+                    document.getElementById("defaultOpen").click();
+                })
+                .catch(error => {
+                    console.error('Error fetching inventory:', error);
+                    const errorDiv = document.getElementById('error-message');
+                    errorDiv.style.display = 'block';
+                    errorDiv.innerHTML = `
+                        Error loading inventory data: ${error.message}<br>
+                        <small>Make sure you are running this page from a web server (e.g., using <code>python -m http.server</code>) to avoid CORS issues.</small>
+                    `;
+                    document.getElementById('loading-message').style.display = 'none';
+                });
+
+            document.getElementById('sortOrder').addEventListener('change', applySort);
+            document.getElementById('sortDirection').addEventListener('change', applySort);
+        });
+
+        function applySort() {
+            const sortBy = document.getElementById('sortOrder').value;
+            const sortDir = document.getElementById('sortDirection').value;
+
+            sortData(inventoryData.Tablets, sortBy, sortDir);
+            sortData(inventoryData.Pens, sortBy, sortDir);
+
+            renderTable('tablets-table', inventoryData.Tablets, [
+                'Brand', 'ModelName', 'ModelID', 'Type', 'InventoryID', 'Vendor', 'OrderDate'
+            ]);
+            renderTable('pens-table', inventoryData.Pens, [
+                'Brand', 'Pen', 'PenTech', 'PenTechSubtype', 'InventoryID', 'WithTablet', 'Notes'
+            ]);
+        }
+
+        function sortData(items, criteria, direction) {
+            items.sort((a, b) => {
+                const brandA = (a.Brand || '').toLowerCase();
+                const brandB = (b.Brand || '').toLowerCase();
+                const nameA = (a.ModelName || a.Pen || '').toLowerCase();
+                const nameB = (b.ModelName || b.Pen || '').toLowerCase();
+                const modelIdA = (a.ModelID || a.Pen || '').toLowerCase();
+                const modelIdB = (b.ModelID || b.Pen || '').toLowerCase();
+                // Use OrderDate for tablets, dateCreated for Pens as fallback
+                const dateA = a.OrderDate || a.dateCreated || 0;
+                const dateB = b.OrderDate || b.dateCreated || 0;
+
+                let comparison = 0;
+
+                if (criteria === 'brand') {
+                    // Brand -> Name -> Date
+                    if (brandA < brandB) comparison = -1;
+                    else if (brandA > brandB) comparison = 1;
+                    else if (nameA < nameB) comparison = -1;
+                    else if (nameA > nameB) comparison = 1;
+                    else if (dateA < dateB) comparison = -1;
+                    else if (dateA > dateB) comparison = 1;
+                } else if (criteria === 'date') {
+                    // Date -> Brand -> Name
+                    if (dateA < dateB) comparison = -1;
+                    else if (dateA > dateB) comparison = 1;
+                    else if (brandA < brandB) comparison = -1;
+                    else if (brandA > brandB) comparison = 1;
+                    else if (nameA < nameB) comparison = -1;
+                    else if (nameA > nameB) comparison = 1;
+                } else if (criteria === 'modelId') {
+                    // Model ID -> Brand -> Date
+                    if (modelIdA < modelIdB) comparison = -1;
+                    else if (modelIdA > modelIdB) comparison = 1;
+                    else if (brandA < brandB) comparison = -1;
+                    else if (brandA > brandB) comparison = 1;
+                    else if (dateA < dateB) comparison = -1;
+                    else if (dateA > dateB) comparison = 1;
+                }
+
+                return direction === 'desc' ? -comparison : comparison;
+            });
+        }
+
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tab-button");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+
+        function renderTable(tableId, items, columns) {
+            const tbody = document.querySelector(`#${tableId} tbody`);
+            tbody.innerHTML = '';
+
+            if (!items || items.length === 0) {
+                const row = document.createElement('tr');
+                const cell = document.createElement('td');
+                cell.colSpan = columns.length;
+                cell.textContent = 'No items found.';
+                cell.style.textAlign = 'center';
+                row.appendChild(cell);
+                tbody.appendChild(row);
+                return;
+            }
+
+            items.forEach((item, index) => {
+                const row = document.createElement('tr');
+
+                // Row Number Cell
+                const indexCell = document.createElement('td');
+                indexCell.textContent = index + 1;
+                row.appendChild(indexCell);
+
+                columns.forEach(col => {
+                    const cell = document.createElement('td');
+                    cell.textContent = item[col] || '-';
+                    row.appendChild(cell);
+                });
+                tbody.appendChild(row);
+            });
+        }
+    </script>
+
+</body>
+
+</html>
