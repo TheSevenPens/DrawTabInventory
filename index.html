@@ -159,6 +159,7 @@
                 <option value="asc">Ascending</option>
                 <option value="desc">Descending</option>
             </select>
+            <span id="rowCount" style="margin-left: 15px; font-weight: bold; color: #555;"></span>
         </div>
 
         <div class="tabs">
@@ -209,6 +210,7 @@
 
     <script>
         let inventoryData = { Tablets: [], Pens: [] };
+        let currentTab = 'Tablets'; // Default valid tab
 
         document.addEventListener('DOMContentLoaded', () => {
             const dbPath = 'db/7p_drawtab_inventory.json';
@@ -222,11 +224,10 @@
                 })
                 .then(data => {
                     inventoryData = data;
-                    populateBrandFilter();
 
                     document.getElementById('loading-message').style.display = 'none';
                     document.getElementById('content').style.display = 'block';
-                    document.getElementById("defaultOpen").click(); // This will trigger openTab -> populateTypeFilter
+                    document.getElementById("defaultOpen").click(); // This will trigger openTab -> populateTypeFilter & populateBrandFilter
                 })
                 .catch(error => {
                     console.error('Error fetching inventory:', error);
@@ -245,17 +246,28 @@
             document.getElementById('typeFilter').addEventListener('change', applySort);
         });
 
-        function populateBrandFilter() {
+        function populateBrandFilter(activeTab) {
             const brands = new Set();
-            inventoryData.Tablets.forEach(item => {
-                if (item.Brand) brands.add(item.Brand);
-            });
-            inventoryData.Pens.forEach(item => {
-                if (item.Brand) brands.add(item.Brand);
-            });
+            const brandSelect = document.getElementById('brandFilter');
+            const currentSelection = brandSelect.value; // Store current selection
+
+            // internal helper
+            const addBrands = (sourceData) => {
+                sourceData.forEach(item => {
+                    if (item.Brand) brands.add(item.Brand);
+                });
+            };
+
+            if (activeTab === 'Tablets') {
+                addBrands(inventoryData.Tablets);
+            } else if (activeTab === 'Pens') {
+                addBrands(inventoryData.Pens);
+            }
 
             const sortedBrands = Array.from(brands).sort();
-            const brandSelect = document.getElementById('brandFilter');
+
+            // Clear and rebuild
+            brandSelect.innerHTML = '<option value="all">All Brands</option>';
 
             sortedBrands.forEach(brand => {
                 const option = document.createElement('option');
@@ -263,6 +275,13 @@
                 option.textContent = brand;
                 brandSelect.appendChild(option);
             });
+
+            // Smart Reset: Try to keep selection if valid, else reset
+            if (currentSelection !== 'all' && brands.has(currentSelection)) {
+                brandSelect.value = currentSelection;
+            } else {
+                brandSelect.value = 'all';
+            }
         }
 
         function populateTypeFilter(activeTab) {
@@ -277,7 +296,7 @@
             };
 
             if (activeTab === 'Tablets') {
-                addOptions(inventoryData.Tablets, 'Type');
+                addOptions(inventoryData.Tablets, 'TabletType');
             } else if (activeTab === 'Pens') {
                 addOptions(inventoryData.Pens, 'PenTech');
             }
@@ -313,15 +332,29 @@
             }
 
             if (typeFilter !== 'all') {
-                filteredTablets = filteredTablets.filter(item => item.Type === typeFilter);
+                filteredTablets = filteredTablets.filter(item => item.TabletType === typeFilter);
                 filteredPens = filteredPens.filter(item => item.PenTech === typeFilter);
             }
+
+            // Update Row Count Display
+            const rowCountSpan = document.getElementById('rowCount');
+            let shownCount = 0;
+            let totalCount = 0;
+
+            if (currentTab === 'Tablets') {
+                shownCount = filteredTablets.length;
+                totalCount = inventoryData.Tablets.length;
+            } else {
+                shownCount = filteredPens.length;
+                totalCount = inventoryData.Pens.length;
+            }
+            rowCountSpan.textContent = `Showing ${shownCount} of ${totalCount} items`;
 
             sortData(filteredTablets, sortBy, sortDir);
             sortData(filteredPens, sortBy, sortDir);
 
             renderTable('tablets-table', filteredTablets, [
-                'Brand', 'ModelName', 'ModelID', 'Type', 'InventoryID', 'Vendor', 'OrderDate'
+                'Brand', 'ModelName', 'ModelID', 'TabletType', 'InventoryID', 'Vendor', 'OrderDate'
             ]);
             renderTable('pens-table', filteredPens, [
                 'Brand', 'Pen', 'PenTech', 'PenTechSubtype', 'InventoryID', 'WithTablet', 'Notes'
@@ -385,7 +418,9 @@
             document.getElementById(tabName).style.display = "block";
             evt.currentTarget.className += " active";
 
+            currentTab = tabName; // Update global state
             populateTypeFilter(tabName);
+            populateBrandFilter(tabName);
             applySort(); // Re-apply sort/filter with new type options (which resets to all)
         }
 
