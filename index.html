@@ -145,6 +145,10 @@
             <select id="brandFilter">
                 <option value="all">All Brands</option>
             </select>
+            <label for="typeFilter">Filter by Type:</label>
+            <select id="typeFilter">
+                <option value="all">All Types</option>
+            </select>
             <label for="sortOrder">Sort by:</label>
             <select id="sortOrder">
                 <option value="brand">Brand</option>
@@ -219,11 +223,10 @@
                 .then(data => {
                     inventoryData = data;
                     populateBrandFilter();
-                    applySort(); // Initial render with default sort
 
                     document.getElementById('loading-message').style.display = 'none';
                     document.getElementById('content').style.display = 'block';
-                    document.getElementById("defaultOpen").click();
+                    document.getElementById("defaultOpen").click(); // This will trigger openTab -> populateTypeFilter
                 })
                 .catch(error => {
                     console.error('Error fetching inventory:', error);
@@ -239,6 +242,7 @@
             document.getElementById('sortOrder').addEventListener('change', applySort);
             document.getElementById('sortDirection').addEventListener('change', applySort);
             document.getElementById('brandFilter').addEventListener('change', applySort);
+            document.getElementById('typeFilter').addEventListener('change', applySort);
         });
 
         function populateBrandFilter() {
@@ -261,10 +265,44 @@
             });
         }
 
+        function populateTypeFilter(activeTab) {
+            const types = new Set();
+            const typeSelect = document.getElementById('typeFilter');
+
+            // internal helper to add options
+            const addOptions = (sourceData, field) => {
+                sourceData.forEach(item => {
+                    if (item[field]) types.add(item[field]);
+                });
+            };
+
+            if (activeTab === 'Tablets') {
+                addOptions(inventoryData.Tablets, 'Type');
+            } else if (activeTab === 'Pens') {
+                addOptions(inventoryData.Pens, 'PenTech');
+            }
+
+            const sortedTypes = Array.from(types).sort();
+
+            // Clear existing options except "All Types"
+            typeSelect.innerHTML = '<option value="all">All Types</option>';
+
+            sortedTypes.forEach(type => {
+                const option = document.createElement('option');
+                option.value = type;
+                option.textContent = type;
+                typeSelect.appendChild(option);
+            });
+
+            // Reset to 'all'
+            typeSelect.value = 'all';
+        }
+
         function applySort() {
             const sortBy = document.getElementById('sortOrder').value;
             const sortDir = document.getElementById('sortDirection').value;
             const brandFilter = document.getElementById('brandFilter').value;
+            const typeFilter = document.getElementById('typeFilter').value;
 
             let filteredTablets = inventoryData.Tablets;
             let filteredPens = inventoryData.Pens;
@@ -272,6 +310,11 @@
             if (brandFilter !== 'all') {
                 filteredTablets = filteredTablets.filter(item => item.Brand === brandFilter);
                 filteredPens = filteredPens.filter(item => item.Brand === brandFilter);
+            }
+
+            if (typeFilter !== 'all') {
+                filteredTablets = filteredTablets.filter(item => item.Type === typeFilter);
+                filteredPens = filteredPens.filter(item => item.PenTech === typeFilter);
             }
 
             sortData(filteredTablets, sortBy, sortDir);
@@ -341,6 +384,9 @@
             }
             document.getElementById(tabName).style.display = "block";
             evt.currentTarget.className += " active";
+
+            populateTypeFilter(tabName);
+            applySort(); // Re-apply sort/filter with new type options (which resets to all)
         }
 
         function renderTable(tableId, items, columns) {
