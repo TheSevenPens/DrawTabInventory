@@ -141,6 +141,10 @@
 
     <div id="content" style="display: none;">
         <div class="controls">
+            <label for="brandFilter">Filter by Brand:</label>
+            <select id="brandFilter">
+                <option value="all">All Brands</option>
+            </select>
             <label for="sortOrder">Sort by:</label>
             <select id="sortOrder">
                 <option value="brand">Brand</option>
@@ -214,6 +218,7 @@
                 })
                 .then(data => {
                     inventoryData = data;
+                    populateBrandFilter();
                     applySort(); // Initial render with default sort
 
                     document.getElementById('loading-message').style.display = 'none';
@@ -233,19 +238,49 @@
 
             document.getElementById('sortOrder').addEventListener('change', applySort);
             document.getElementById('sortDirection').addEventListener('change', applySort);
+            document.getElementById('brandFilter').addEventListener('change', applySort);
         });
+
+        function populateBrandFilter() {
+            const brands = new Set();
+            inventoryData.Tablets.forEach(item => {
+                if (item.Brand) brands.add(item.Brand);
+            });
+            inventoryData.Pens.forEach(item => {
+                if (item.Brand) brands.add(item.Brand);
+            });
+
+            const sortedBrands = Array.from(brands).sort();
+            const brandSelect = document.getElementById('brandFilter');
+
+            sortedBrands.forEach(brand => {
+                const option = document.createElement('option');
+                option.value = brand;
+                option.textContent = brand;
+                brandSelect.appendChild(option);
+            });
+        }
 
         function applySort() {
             const sortBy = document.getElementById('sortOrder').value;
             const sortDir = document.getElementById('sortDirection').value;
+            const brandFilter = document.getElementById('brandFilter').value;
 
-            sortData(inventoryData.Tablets, sortBy, sortDir);
-            sortData(inventoryData.Pens, sortBy, sortDir);
+            let filteredTablets = inventoryData.Tablets;
+            let filteredPens = inventoryData.Pens;
 
-            renderTable('tablets-table', inventoryData.Tablets, [
+            if (brandFilter !== 'all') {
+                filteredTablets = filteredTablets.filter(item => item.Brand === brandFilter);
+                filteredPens = filteredPens.filter(item => item.Brand === brandFilter);
+            }
+
+            sortData(filteredTablets, sortBy, sortDir);
+            sortData(filteredPens, sortBy, sortDir);
+
+            renderTable('tablets-table', filteredTablets, [
                 'Brand', 'ModelName', 'ModelID', 'Type', 'InventoryID', 'Vendor', 'OrderDate'
             ]);
-            renderTable('pens-table', inventoryData.Pens, [
+            renderTable('pens-table', filteredPens, [
                 'Brand', 'Pen', 'PenTech', 'PenTechSubtype', 'InventoryID', 'WithTablet', 'Notes'
             ]);
         }
