@@ -129,6 +129,47 @@
             border-radius: 4px;
             border: 1px solid #ccc;
         }
+
+        .search-bar {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .search-bar input[type="text"] {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 16px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            font-family: inherit;
+        }
+
+        .search-bar input[type="text"]:focus {
+            outline: none;
+            border-color: #2c3e50;
+            box-shadow: 0 0 0 2px rgba(44, 62, 80, 0.15);
+        }
+
+        .search-bar button {
+            padding: 8px 14px;
+            font-size: 15px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            background: #f4f4f9;
+            cursor: pointer;
+        }
+
+        .search-bar button:hover {
+            background: #ddd;
+        }
+
+        .search-hint {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 8px;
+        }
     </style>
 </head>
 
@@ -140,6 +181,14 @@
     <div id="loading-message" class="loading">Loading inventory data...</div>
 
     <div id="content" style="display: none;">
+        <div class="search-bar">
+            <label for="searchInput">Search:</label>
+            <input type="text" id="searchInput" placeholder='e.g.  huion  GS1563  "pen display"  kam*' autocomplete="off">
+            <button id="clearSearch" title="Clear search">&#x2715;</button>
+        </div>
+        <div class="search-hint">
+            Multiple terms are ANDed. Use quotes for phrases: <code>"pen display"</code>. Use wildcards: <code>kam*</code>, <code>h?ion</code>.
+        </div>
         <div class="controls">
             <label for="brandFilter">Filter by Brand:</label>
             <select id="brandFilter">
@@ -244,6 +293,11 @@
             document.getElementById('sortDirection').addEventListener('change', applySort);
             document.getElementById('brandFilter').addEventListener('change', applySort);
             document.getElementById('typeFilter').addEventListener('change', applySort);
+            document.getElementById('searchInput').addEventListener('input', applySort);
+            document.getElementById('clearSearch').addEventListener('click', () => {
+                document.getElementById('searchInput').value = '';
+                applySort();
+            });
         });
 
         function populateBrandFilter(activeTab) {
@@ -317,11 +371,54 @@
             typeSelect.value = 'all';
         }
 
+        // Parse a search query into an array of term matchers.
+        // Supports: quoted phrases, * (any chars) and ? (single char) wildcards.
+        // All terms are ANDed together.
+        function parseSearchQuery(query) {
+            const tokens = [];
+            // Tokenise: quoted strings or non-whitespace runs
+            const regex = /"([^"]*)"|\S+/g;
+            let match;
+            while ((match = regex.exec(query)) !== null) {
+                // match[1] is set when the quoted group matched, else match[0]
+                const raw = match[1] !== undefined ? match[1] : match[0];
+                tokens.push(raw);
+            }
+            // Convert each token into a predicate function
+            return tokens.map(token => {
+                const lower = token.toLowerCase();
+                // Build a regex from the token, treating * and ? as wildcards
+                const hasWildcard = lower.includes('*') || lower.includes('?');
+                if (hasWildcard) {
+                    const escaped = lower.replace(/[.+^${}()|[\]\\]/g, '\\$&')
+                                        .replace(/\*/g, '.*')
+                                        .replace(/\?/g, '.');
+                    const re = new RegExp('^' + escaped + '$');
+                    return (text) => re.test(text.toLowerCase());
+                } else {
+                    return (text) => text.toLowerCase().includes(lower);
+                }
+            });
+        }
+
+        // Return true if item matches all search predicates across the given fields.
+        function matchesSearch(item, fields, predicates) {
+            if (predicates.length === 0) return true;
+            return predicates.every(pred => {
+                return fields.some(field => {
+                    const val = item[field];
+                    return val && pred(String(val));
+                });
+            });
+        }
+
         function applySort() {
             const sortBy = document.getElementById('sortOrder').value;
             const sortDir = document.getElementById('sortDirection').value;
             const brandFilter = document.getElementById('brandFilter').value;
             const typeFilter = document.getElementById('typeFilter').value;
+            const searchQuery = document.getElementById('searchInput').value.trim();
+            const predicates = parseSearchQuery(searchQuery);
 
             let filteredTablets = inventoryData.Tablets;
             let filteredPens = inventoryData.Pens;
@@ -335,6 +432,11 @@
                 filteredTablets = filteredTablets.filter(item => item.TabletType === typeFilter);
                 filteredPens = filteredPens.filter(item => item.PenTech === typeFilter);
             }
+
+            const tabletSearchFields = ['Brand', 'ModelName', 'ModelID', 'Vendor'];
+            const penSearchFields = ['Brand', 'Pen'];
+            filteredTablets = filteredTablets.filter(item => matchesSearch(item, tabletSearchFields, predicates));
+            filteredPens = filteredPens.filter(item => matchesSearch(item, penSearchFields, predicates));
 
             // Update Row Count Display
             const rowCountSpan = document.getElementById('rowCount');
