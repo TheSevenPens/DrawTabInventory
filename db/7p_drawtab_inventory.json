@@ -1976,14 +1976,14 @@
     {
       "Brand": "WACOM",
       "ModelID": "CTL-672",
-      "ModelName": "One by Wacom Medium",
+      "ModelName": "One by Wacom M",
       "TabletType": "PENTABLET",
       "InventoryID": "WAT.0002",
       "Vendor": "AMAZON",
       "OrderDate": "2022-09-30",
       "id": "557757fb-e79a-4409-8745-2d7adbb955a8",
       "dateCreated": 1765702327636,
-      "lastModified": 1765702327636
+      "lastModified": 1772173929809
     },
     {
       "Brand": "WACOM",
@@ -2565,14 +2565,14 @@
     {
       "Brand": "WACOM",
       "ModelID": "DTH-167",
-      "ModelName": "Cintiq Pro 16 (2021)",
+      "ModelName": "Cintiq Pro 16 2021",
       "TabletType": "PENDISPLAY",
       "InventoryID": "WAT.0053",
       "Vendor": "AMAZON",
       "OrderDate": "2023-09-24",
       "id": "c621c73b-165a-4bf3-ad8f-952239ed7fd0",
       "dateCreated": 1765702327636,
-      "lastModified": 1765702327636
+      "lastModified": 1772173879795
     },
     {
       "Brand": "WACOM",
@@ -2674,14 +2674,15 @@
     {
       "Brand": "WACOM",
       "ModelID": "DTH-246",
-      "ModelName": "Cintiq 24 Touch (2025)",
+      "ModelName": "Cintiq 24 Touch 2025",
       "TabletType": "PENDISPLAY",
       "InventoryID": "WAT.0062",
       "Vendor": "WACOM",
       "OrderDate": "2025-06-16",
       "id": "dd315130-c8c7-415f-aebb-00bd1df1144d",
       "dateCreated": 1765702327636,
-      "lastModified": 1765702327636
+      "lastModified": 1772173871811,
+      "Type": "PENDISPLAY"
     },
     {
       "Brand": "WACOM",
@@ -2736,7 +2737,7 @@
     },
     {
       "Brand": "WACOM",
-      "ModelID": "Bamboo Splash",
+      "ModelID": "CTL-471",
       "ModelName": "Bamboo Splash",
       "TabletType": "PENTABLET",
       "InventoryID": "WAT.0068",
@@ -2744,7 +2745,7 @@
       "OrderDate": "2025-06-22",
       "id": "e4248170-e0a6-4acf-9c05-d0f51b7d30ff",
       "dateCreated": 1765702327636,
-      "lastModified": 1766281663799,
+      "lastModified": 1772173832028,
       "tags": []
     },
     {
@@ -2862,14 +2863,14 @@
     },
     {
       "Brand": "WACOM",
-      "ModelName": "One by Wacom Medium",
+      "ModelName": "One by Wacom M",
       "ModelID": "CTL-672",
       "InventoryID": "WAT.0078",
       "TabletType": "PENTABLET",
       "Vendor": "WACOM",
       "id": "09b15046-574c-4256-a41b-46f44f20673e",
       "dateCreated": 1769236962088,
-      "lastModified": 1769237734487,
+      "lastModified": 1772173936401,
       "OrderDate": "2025-12-29"
     },
     {
