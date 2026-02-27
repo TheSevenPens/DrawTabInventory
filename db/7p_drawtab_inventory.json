@@ -2884,6 +2884,18 @@
       "lastModified": 1770871621335
     },
     {
+      "Brand": "WACOM",
+      "InventoryID": "WAT.0080",
+      "ModelName": "Cintiq 21UX 2005",
+      "ModelID": "DTZ-2100",
+      "Type": "PENDISPLAY",
+      "Vendor": "EBAY",
+      "OrderDate": "2026-02-26",
+      "id": "9bb33de6-cf25-4b2f-8271-ad05035f8403",
+      "dateCreated": 1772168722919,
+      "lastModified": 1772168722919
+    },
+    {
       "Brand": "XENCELABS",
       "ModelID": "BPH1212W-A",
       "ModelName": "Pen Tablet Medium",
