@@ -22,7 +22,7 @@
       "Notes": null,
       "id": "58428f73-ee38-4149-bbf5-9728dd6f6af4",
       "dateCreated": 1765702327636,
-      "lastModified": 1765702327636
+      "lastModified": 1773041054753
     },
     {
       "Brand": "HUION",
@@ -345,6 +345,18 @@
       "id": "2ab4d904-8225-4280-b756-407bd03599e5",
       "dateCreated": 1765737463267,
       "lastModified": 1765737463267
+    },
+    {
+      "Brand": "HUION",
+      "Pen": "PW600L",
+      "PenTech": "EMR",
+      "InventoryID": "HUP.0030",
+      "WithTablet": "K22GEN3",
+      "id": "32473b67-f495-41b4-9ac6-460e657cefe3",
+      "dateCreated": 1773041088612,
+      "lastModified": 1773041122496,
+      "PenTechSubtype": null,
+      "Notes": null
     },
     {
       "Brand": "HUION",
@@ -986,6 +998,18 @@
       "id": "42c236e9-dd29-4f43-9f4a-82c5adaffe6c",
       "dateCreated": 1765702327635,
       "lastModified": 1765702327635
+    },
+    {
+      "Brand": "WACOM",
+      "Pen": "Intuos3 Grip Pen (ZP-501E)",
+      "PenTech": "EMR",
+      "PenTechSubtype": null,
+      "InventoryID": "WAP.0075",
+      "WithTablet": "WAT.0080",
+      "Notes": null,
+      "id": "36e8ae2c-72d1-49a7-85c8-bb0b978eee27",
+      "dateCreated": 1773041319408,
+      "lastModified": 1773041713321
     },
     {
       "Brand": "WACOM",
@@ -1899,6 +1923,19 @@
       "id": "711fcc41-5019-48f2-8e2a-fb094d8137eb",
       "dateCreated": 1765702327636,
       "lastModified": 1765702327636
+    },
+    {
+      "Brand": "HUION",
+      "ModelID": "GS2203",
+      "ModelName": "Kamvas 22 GEN3",
+      "TabletType": "PENDISPLAY",
+      "InventoryID": "HUT.0020",
+      "Vendor": "AMAZON",
+      "OrderDate": "2021-08-20",
+      "id": "4734d3f0-2f3e-4802-b775-4906366fd882",
+      "dateCreated": 1773041190689,
+      "lastModified": 1773041220186,
+      "tags": []
     },
     {
       "Brand": "HUION",
@@ -2894,7 +2931,9 @@
       "OrderDate": "2026-02-26",
       "id": "9bb33de6-cf25-4b2f-8271-ad05035f8403",
       "dateCreated": 1772168722919,
-      "lastModified": 1772168722919
+      "lastModified": 1773041292742,
+      "TabletType": "PENDISPLAY",
+      "tags": []
     },
     {
       "Brand": "XENCELABS",
