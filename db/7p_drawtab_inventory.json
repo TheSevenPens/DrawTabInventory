@@ -477,23 +477,28 @@
       "lastModified": 1765702327635
     },
     {
-      "Brand": "Ugee",
+      "Brand": "UGEE",
       "Pen": "U1200/U1600/UE16 Stylus",
       "WithTablet": "UE16",
       "PenTech": "EMR",
       "InventoryID": "UGP.0001",
       "id": "d65fda1d-680a-4fcc-ace6-078ddb38a094",
       "dateCreated": 1765737687190,
-      "lastModified": 1765737687190
+      "lastModified": 1773372510556,
+      "PenTechSubtype": null,
+      "Notes": null
     },
     {
-      "Brand": "Ugee",
+      "Brand": "UGEE",
       "Pen": "M908 stylus",
       "InventoryID": "UGP.0002",
       "PenTech": "EMR",
       "id": "f32fbf1d-4565-444d-839e-17de5518f2e0",
       "dateCreated": 1765737708971,
-      "lastModified": 1765737708971
+      "lastModified": 1773372516464,
+      "PenTechSubtype": null,
+      "WithTablet": null,
+      "Notes": null
     },
     {
       "Brand": "APPLE",
@@ -1704,12 +1709,24 @@
       "id": "62e63b49-89af-48f3-bd67-8e7eaf9a6314",
       "dateCreated": 1765702327635,
       "lastModified": 1765702327635
+    },
+    {
+      "Brand": "GAOMON",
+      "Pen": "AP31",
+      "PenTech": "EMR",
+      "PenTechSubtype": null,
+      "WithTablet": "GAT.0001",
+      "Notes": null,
+      "InventoryID": "GAP.001",
+      "id": "58b74b34-ef3e-4353-bcd3-61533ff04345",
+      "dateCreated": 1773372618359,
+      "lastModified": 1773372674790
     }
   ],
   "Tablets": [
     {
       "Brand": "GAOMON",
-      "ModelName": "M10K",
+      "ModelName": "M10K 2018",
       "ModelID": "M10K",
       "InventoryID": "GAT.0001",
       "Vendor": "AMAZON",
@@ -1717,7 +1734,7 @@
       "tags": [],
       "id": "36b8cf06-ed47-44b0-a77e-7ad45127f564",
       "dateCreated": 1766470690151,
-      "lastModified": 1767017709682,
+      "lastModified": 1773372645311,
       "OrderDate": "2025-12-12"
     },
     {
