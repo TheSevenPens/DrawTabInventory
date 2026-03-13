@@ -1727,14 +1727,14 @@
     {
       "Brand": "GAOMON",
       "ModelName": "M10K 2018",
-      "ModelID": "M10K",
+      "ModelID": "M10K_2018",
       "InventoryID": "GAT.0001",
       "Vendor": "AMAZON",
       "TabletType": "PENTABLET",
       "tags": [],
       "id": "36b8cf06-ed47-44b0-a77e-7ad45127f564",
       "dateCreated": 1766470690151,
-      "lastModified": 1773372645311,
+      "lastModified": 1773372805917,
       "OrderDate": "2025-12-12"
     },
     {
