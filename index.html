@@ -208,6 +208,12 @@
                 <option value="asc">Ascending</option>
                 <option value="desc">Descending</option>
             </select>
+            <label for="defectsFilter" style="margin-left: 15px;">Defects:</label>
+            <select id="defectsFilter">
+                <option value="all">All</option>
+                <option value="without">Without defects</option>
+                <option value="with">With defects</option>
+            </select>
             <span id="rowCount" style="margin-left: 15px; font-weight: bold; color: #555;"></span>
         </div>
 
@@ -228,6 +234,7 @@
                         <th>Inventory ID</th>
                         <th>Vendor</th>
                         <th>Order Date</th>
+                        <th>Defects</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -248,6 +255,7 @@
                         <th>Inventory ID</th>
                         <th>With Tablet</th>
                         <th>Notes</th>
+                        <th>Defects</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -262,6 +270,11 @@
         let currentTab = 'Tablets'; // Default valid tab
 
         // Remap DrawTabData inventory fields to the names this app uses
+        function formatDefects(defects) {
+            if (!Array.isArray(defects) || defects.length === 0) return '';
+            return defects.map(d => d && d.Kind ? d.Kind : '').filter(Boolean).join(', ');
+        }
+
         function remapTablets(items) {
             return items.map(t => ({
                 Brand: t.Brand || '',
@@ -271,6 +284,7 @@
                 InventoryID: t.InventoryId || '',
                 Vendor: t.Vendor || '',
                 OrderDate: t.OrderDate || '',
+                Defects: formatDefects(t.Defects),
             }));
         }
 
@@ -283,6 +297,7 @@
                 InventoryID: p.InventoryId || '',
                 WithTablet: p.WithTabletInventoryId || '',
                 Notes: p.Notes || '',
+                Defects: formatDefects(p.Defects),
             }));
         }
 
@@ -320,6 +335,7 @@
             document.getElementById('brandFilter').addEventListener('change', applySort);
             document.getElementById('typeFilter').addEventListener('change', applySort);
             document.getElementById('searchInput').addEventListener('input', applySort);
+            document.getElementById('defectsFilter').addEventListener('change', applySort);
             document.getElementById('clearSearch').addEventListener('click', () => {
                 document.getElementById('searchInput').value = '';
                 applySort();
@@ -444,6 +460,7 @@
             const brandFilter = document.getElementById('brandFilter').value;
             const typeFilter = document.getElementById('typeFilter').value;
             const searchQuery = document.getElementById('searchInput').value.trim();
+            const defectsFilter = document.getElementById('defectsFilter').value;
             const predicates = parseSearchQuery(searchQuery);
 
             let filteredTablets = inventoryData.Tablets;
@@ -459,8 +476,16 @@
                 filteredPens = filteredPens.filter(item => item.PenTech === typeFilter);
             }
 
-            const tabletSearchFields = ['Brand', 'ModelName', 'ModelID', 'Vendor'];
-            const penSearchFields = ['Brand', 'Pen'];
+            if (defectsFilter === 'with') {
+                filteredTablets = filteredTablets.filter(item => item.Defects);
+                filteredPens = filteredPens.filter(item => item.Defects);
+            } else if (defectsFilter === 'without') {
+                filteredTablets = filteredTablets.filter(item => !item.Defects);
+                filteredPens = filteredPens.filter(item => !item.Defects);
+            }
+
+            const tabletSearchFields = ['Brand', 'ModelName', 'ModelID', 'Vendor', 'InventoryID'];
+            const penSearchFields = ['Brand', 'Pen', 'InventoryID'];
             filteredTablets = filteredTablets.filter(item => matchesSearch(item, tabletSearchFields, predicates));
             filteredPens = filteredPens.filter(item => matchesSearch(item, penSearchFields, predicates));
 
@@ -482,10 +507,10 @@
             sortData(filteredPens, sortBy, sortDir);
 
             renderTable('tablets-table', filteredTablets, [
-                'Brand', 'ModelName', 'ModelID', 'TabletType', 'InventoryID', 'Vendor', 'OrderDate'
+                'Brand', 'ModelName', 'ModelID', 'TabletType', 'InventoryID', 'Vendor', 'OrderDate', 'Defects'
             ]);
             renderTable('pens-table', filteredPens, [
-                'Brand', 'Pen', 'PenTech', 'PenTechSubtype', 'InventoryID', 'WithTablet', 'Notes'
+                'Brand', 'Pen', 'PenTech', 'PenTechSubtype', 'InventoryID', 'WithTablet', 'Notes', 'Defects'
             ]);
         }
 
