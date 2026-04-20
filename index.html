@@ -120,7 +120,20 @@
 
         .controls {
             margin-bottom: 5px;
-            text-align: right;
+        }
+
+        .controls-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px 12px;
+            justify-content: flex-end;
+            margin-bottom: 4px;
+        }
+
+        .controls-row label {
+            font-size: 14px;
+            color: #555;
         }
 
         select {
@@ -190,31 +203,44 @@
             Multiple terms are ANDed. Use quotes for phrases: <code>"pen display"</code>. Use wildcards: <code>kam*</code>, <code>h?ion</code>.
         </div>
         <div class="controls">
-            <label for="brandFilter">Filter by Brand:</label>
-            <select id="brandFilter">
-                <option value="all">All Brands</option>
-            </select>
-            <label for="typeFilter">Filter by Type:</label>
-            <select id="typeFilter">
-                <option value="all">All Types</option>
-            </select>
-            <label for="sortOrder">Sort by:</label>
-            <select id="sortOrder">
-                <option value="brand">Brand</option>
-                <option value="modelId">Model ID</option>
-                <option value="date">Order Date</option>
-            </select>
-            <select id="sortDirection">
-                <option value="asc">Ascending</option>
-                <option value="desc">Descending</option>
-            </select>
-            <label for="defectsFilter" style="margin-left: 15px;">Defects:</label>
-            <select id="defectsFilter">
-                <option value="all">All</option>
-                <option value="without">Without defects</option>
-                <option value="with">With defects</option>
-            </select>
-            <span id="rowCount" style="margin-left: 15px; font-weight: bold; color: #555;"></span>
+            <!-- Row 1: filters -->
+            <div class="controls-row">
+                <label for="brandFilter">Brand:</label>
+                <select id="brandFilter">
+                    <option value="all">All Brands</option>
+                </select>
+                <label for="typeFilter">Type:</label>
+                <select id="typeFilter">
+                    <option value="all">All Types</option>
+                </select>
+                <label for="sizeFilter" id="sizeFilterLabel">Size:</label>
+                <select id="sizeFilter">
+                    <option value="all">All Sizes</option>
+                </select>
+                <label for="defectsFilter">Defects:</label>
+                <select id="defectsFilter">
+                    <option value="all">All</option>
+                    <option value="without">Without defects</option>
+                    <option value="with">With defects</option>
+                </select>
+            </div>
+
+            <!-- Row 2: sort + row count -->
+            <div class="controls-row">
+                <label for="sortOrder">Sort by:</label>
+                <select id="sortOrder">
+                    <option value="brand">Brand</option>
+                    <option value="modelId">Model ID</option>
+                    <option value="date">Order Date</option>
+                    <option value="year">Year</option>
+                    <option value="activeAreaSize">Active Area Size</option>
+                </select>
+                <select id="sortDirection">
+                    <option value="asc">Ascending</option>
+                    <option value="desc">Descending</option>
+                </select>
+                <span id="rowCount" style="font-weight: bold; color: #555;"></span>
+            </div>
         </div>
 
         <div class="tabs">
@@ -231,6 +257,9 @@
                         <th>Model Name</th>
                         <th>Model ID</th>
                         <th>Type</th>
+                        <th>Year</th>
+                        <th>Active Area Size</th>
+                        <th>Size Category</th>
                         <th>Inventory ID</th>
                         <th>Vendor</th>
                         <th>Order Date</th>
@@ -275,17 +304,60 @@
             return defects.map(d => d && d.Kind ? d.Kind : '').filter(Boolean).join(', ');
         }
 
-        function remapTablets(items) {
-            return items.map(t => ({
-                Brand: t.Brand || '',
-                ModelName: t.ModelName || '',
-                ModelID: t.ModelId || '',
-                TabletType: t.TabletType || '',
-                InventoryID: t.InventoryId || '',
-                Vendor: t.Vendor || '',
-                OrderDate: t.OrderDate || '',
-                Defects: formatDefects(t.Defects),
-            }));
+        // Compute active-area diagonal in mm from a Digitizer.Dimensions object.
+        // Returns null if dimensions are missing or incomplete.
+        function digitizerDiagonalMm(dims) {
+            if (!dims || dims.Width == null || dims.Height == null) return null;
+            return Math.sqrt(dims.Width * dims.Width + dims.Height * dims.Height);
+        }
+
+        // Size category, mirroring the canonical rule in
+        // data-repo/lib/entities/tablet-fields.ts (inch-based thresholds).
+        // Returns "" when no category applies (e.g. unknown type or out-of-range).
+        function sizeCategoryFor(type, diagonalMm) {
+            if (diagonalMm == null) return '';
+            const diagIn = diagonalMm * 0.03937;
+            if (type === 'PENTABLET') {
+                if (diagIn >= 2  && diagIn < 6)   return 'Tiny';
+                if (diagIn >= 6  && diagIn < 10)  return 'Small';
+                if (diagIn >= 10 && diagIn < 14)  return 'Medium';
+                if (diagIn >= 14 && diagIn < 20)  return 'Large';
+                if (diagIn >= 20 && diagIn <= 29) return 'Extra Large';
+            } else if (type === 'PENDISPLAY' || type === 'STANDALONE') {
+                if (diagIn >= 11 && diagIn < 15)  return 'Small';
+                if (diagIn >= 15 && diagIn < 20)  return 'Medium';
+                if (diagIn >= 20 && diagIn < 30)  return 'Large';
+                if (diagIn >= 30 && diagIn <= 34) return 'Extra Large';
+            }
+            return '';
+        }
+
+        // Canonical size-category ordering used for sorting the filter dropdown
+        // and for any sort operation that touches SizeCategory.
+        const SIZE_CATEGORY_ORDER = ['Tiny', 'Small', 'Medium', 'Large', 'Extra Large'];
+
+        function remapTablets(items, tabletInfoByEntityId) {
+            return items.map(t => {
+                const info = tabletInfoByEntityId && t.TabletEntityId
+                    ? tabletInfoByEntityId.get(t.TabletEntityId)
+                    : null;
+                const diagMm = info ? digitizerDiagonalMm(info.dimensions) : null;
+                const diagCm = diagMm != null ? (diagMm / 10) : null;
+                const category = info ? sizeCategoryFor(info.type || t.TabletType, diagMm) : '';
+                return {
+                    Brand: t.Brand || '',
+                    ModelName: t.ModelName || '',
+                    ModelID: t.ModelId || '',
+                    TabletType: t.TabletType || '',
+                    Year: info && info.launchYear ? info.launchYear : '',
+                    ActiveAreaSize: diagCm != null ? `${diagCm.toFixed(1)} cm` : '',
+                    SizeCategory: category,
+                    InventoryID: t.InventoryId || '',
+                    Vendor: t.Vendor || '',
+                    OrderDate: t.OrderDate || '',
+                    Defects: formatDefects(t.Defects),
+                };
+            });
         }
 
         function remapPens(items, penNameByEntityId) {
@@ -313,10 +385,16 @@
             'STAEDTLER', 'UGEE', 'WACOM', 'XENCELABS', 'XPPEN',
         ];
 
+        // Brands with canonical tablet files in data-repo/data/tablets/.
+        const TABLET_BRANDS = [
+            'HUION', 'UGEE', 'WACOM', 'XENCELABS', 'XPPEN',
+        ];
+
         document.addEventListener('DOMContentLoaded', () => {
             const pensUrl = 'data-repo/data/inventory/sevenpens-pens.json';
             const tabletsUrl = 'data-repo/data/inventory/sevenpens-tablets.json';
             const penBrandUrl = (brand) => `data-repo/data/pens/${brand}-pens.json`;
+            const tabletBrandUrl = (brand) => `data-repo/data/tablets/${brand}-tablets.json`;
 
             // Fetch each pen brand file; tolerate 404s so a missing brand file
             // just means those pens won't get a friendly name.
@@ -325,13 +403,19 @@
                     .then(r => r.ok ? r.json() : { Pens: [] })
                     .catch(() => ({ Pens: [] }))
             );
+            const tabletBrandFetches = TABLET_BRANDS.map(brand =>
+                fetch(tabletBrandUrl(brand))
+                    .then(r => r.ok ? r.json() : { DrawingTablets: [] })
+                    .catch(() => ({ DrawingTablets: [] }))
+            );
 
             Promise.all([
                 fetch(tabletsUrl).then(r => { if (!r.ok) throw new Error(`Tablets: ${r.status}`); return r.json(); }),
                 fetch(pensUrl).then(r => { if (!r.ok) throw new Error(`Pens: ${r.status}`); return r.json(); }),
-                ...penBrandFetches,
+                Promise.all(penBrandFetches),
+                Promise.all(tabletBrandFetches),
             ])
-                .then(([tabletsData, pensData, ...penBrandData]) => {
+                .then(([tabletsData, pensData, penBrandData, tabletBrandData]) => {
                     // Build EntityId -> PenName map from all loaded brand files
                     const penNameByEntityId = new Map();
                     for (const file of penBrandData) {
@@ -342,8 +426,23 @@
                         }
                     }
 
+                    // Build TabletEntityId -> { launchYear, dimensions, type } map.
+                    // Tablets use nested groups: Meta/Model/Digitizer.
+                    const tabletInfoByEntityId = new Map();
+                    for (const file of tabletBrandData) {
+                        for (const t of (file.DrawingTablets || [])) {
+                            const id = t.Meta && t.Meta.EntityId;
+                            if (!id) continue;
+                            tabletInfoByEntityId.set(id, {
+                                launchYear: t.Model && t.Model.LaunchYear || '',
+                                dimensions: t.Digitizer && t.Digitizer.Dimensions || null,
+                                type: t.Model && t.Model.Type || '',
+                            });
+                        }
+                    }
+
                     inventoryData = {
-                        Tablets: remapTablets(tabletsData.InventoryTablets || []),
+                        Tablets: remapTablets(tabletsData.InventoryTablets || [], tabletInfoByEntityId),
                         Pens: remapPens(pensData.InventoryPens || [], penNameByEntityId),
                     };
 
@@ -366,6 +465,7 @@
             document.getElementById('sortDirection').addEventListener('change', applySort);
             document.getElementById('brandFilter').addEventListener('change', applySort);
             document.getElementById('typeFilter').addEventListener('change', applySort);
+            document.getElementById('sizeFilter').addEventListener('change', applySort);
             document.getElementById('searchInput').addEventListener('input', applySort);
             document.getElementById('defectsFilter').addEventListener('change', applySort);
             document.getElementById('clearSearch').addEventListener('click', () => {
@@ -410,6 +510,36 @@
             } else {
                 brandSelect.value = 'all';
             }
+        }
+
+        function populateSizeFilter(activeTab) {
+            const sel = document.getElementById('sizeFilter');
+            const label = document.getElementById('sizeFilterLabel');
+            // Size category only applies to Tablets — hide the control on the Pens tab.
+            if (activeTab !== 'Tablets') {
+                sel.style.display = 'none';
+                label.style.display = 'none';
+                sel.value = 'all';
+                return;
+            }
+            sel.style.display = '';
+            label.style.display = '';
+
+            const present = new Set();
+            for (const t of inventoryData.Tablets) {
+                if (t.SizeCategory) present.add(t.SizeCategory);
+            }
+            // Keep canonical ordering (Tiny -> Extra Large).
+            const ordered = SIZE_CATEGORY_ORDER.filter(c => present.has(c));
+
+            sel.innerHTML = '<option value="all">All Sizes</option>';
+            for (const c of ordered) {
+                const opt = document.createElement('option');
+                opt.value = c;
+                opt.textContent = c;
+                sel.appendChild(opt);
+            }
+            sel.value = 'all';
         }
 
         function populateTypeFilter(activeTab) {
@@ -491,6 +621,7 @@
             const sortDir = document.getElementById('sortDirection').value;
             const brandFilter = document.getElementById('brandFilter').value;
             const typeFilter = document.getElementById('typeFilter').value;
+            const sizeFilter = document.getElementById('sizeFilter').value;
             const searchQuery = document.getElementById('searchInput').value.trim();
             const defectsFilter = document.getElementById('defectsFilter').value;
             const predicates = parseSearchQuery(searchQuery);
@@ -506,6 +637,11 @@
             if (typeFilter !== 'all') {
                 filteredTablets = filteredTablets.filter(item => item.TabletType === typeFilter);
                 filteredPens = filteredPens.filter(item => item.PenTech === typeFilter);
+            }
+
+            // Size filter is tablets-only; pens are unaffected.
+            if (sizeFilter !== 'all') {
+                filteredTablets = filteredTablets.filter(item => item.SizeCategory === sizeFilter);
             }
 
             if (defectsFilter === 'with') {
@@ -539,7 +675,8 @@
             sortData(filteredPens, sortBy, sortDir);
 
             renderTable('tablets-table', filteredTablets, [
-                'Brand', 'ModelName', 'ModelID', 'TabletType', 'InventoryID', 'Vendor', 'OrderDate', 'Defects'
+                'Brand', 'ModelName', 'ModelID', 'TabletType', 'Year', 'ActiveAreaSize', 'SizeCategory',
+                'InventoryID', 'Vendor', 'OrderDate', 'Defects'
             ]);
             renderTable('pens-table', filteredPens, [
                 'Brand', 'Pen', 'PenTech', 'PenTechSubtype', 'InventoryID', 'WithTablet', 'Notes', 'Defects'
@@ -557,6 +694,12 @@
                 // Use OrderDate for tablets, dateCreated for Pens as fallback
                 const dateA = a.OrderDate || a.dateCreated || 0;
                 const dateB = b.OrderDate || b.dateCreated || 0;
+                // Numeric keys for year and active-area size. Missing values
+                // sort last in ascending order (treat as +Infinity).
+                const yearA = a.Year ? parseInt(a.Year, 10) : Number.POSITIVE_INFINITY;
+                const yearB = b.Year ? parseInt(b.Year, 10) : Number.POSITIVE_INFINITY;
+                const sizeA = a.ActiveAreaSize ? parseFloat(a.ActiveAreaSize) : Number.POSITIVE_INFINITY;
+                const sizeB = b.ActiveAreaSize ? parseFloat(b.ActiveAreaSize) : Number.POSITIVE_INFINITY;
 
                 let comparison = 0;
 
@@ -584,6 +727,22 @@
                     else if (brandA > brandB) comparison = 1;
                     else if (dateA < dateB) comparison = -1;
                     else if (dateA > dateB) comparison = 1;
+                } else if (criteria === 'year') {
+                    // Year -> Brand -> Name
+                    if (yearA < yearB) comparison = -1;
+                    else if (yearA > yearB) comparison = 1;
+                    else if (brandA < brandB) comparison = -1;
+                    else if (brandA > brandB) comparison = 1;
+                    else if (nameA < nameB) comparison = -1;
+                    else if (nameA > nameB) comparison = 1;
+                } else if (criteria === 'activeAreaSize') {
+                    // Active area size -> Brand -> Name
+                    if (sizeA < sizeB) comparison = -1;
+                    else if (sizeA > sizeB) comparison = 1;
+                    else if (brandA < brandB) comparison = -1;
+                    else if (brandA > brandB) comparison = 1;
+                    else if (nameA < nameB) comparison = -1;
+                    else if (nameA > nameB) comparison = 1;
                 }
 
                 return direction === 'desc' ? -comparison : comparison;
@@ -606,6 +765,7 @@
             currentTab = tabName; // Update global state
             populateTypeFilter(tabName);
             populateBrandFilter(tabName);
+            populateSizeFilter(tabName);
             applySort(); // Re-apply sort/filter with new type options (which resets to all)
         }
 
