@@ -53,6 +53,25 @@
             background-color: #f1f1f1;
         }
 
+        .deprecation-banner {
+            background: #fff3cd;
+            border: 1px solid #d97706;
+            border-left: 6px solid #d97706;
+            color: #533f03;
+            padding: 14px 18px;
+            margin-bottom: 24px;
+            border-radius: 4px;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+        .deprecation-banner strong {
+            color: #b45309;
+        }
+        .deprecation-banner a {
+            color: #1d4ed8;
+            font-weight: 600;
+        }
+
         .error {
             color: red;
             font-weight: bold;
@@ -187,6 +206,17 @@
 </head>
 
 <body>
+
+    <div class="deprecation-banner">
+        <strong>⚠ This project is deprecated.</strong>
+        It has been replaced by the
+        <a href="https://thesevenpens.github.io/DrawTabDataExplorer/" target="_blank" rel="noopener">DrawTabDataExplorer</a>,
+        which offers a strict superset of features. Use the
+        <a href="https://thesevenpens.github.io/DrawTabDataExplorer/tablet-inventory" target="_blank" rel="noopener">Tablet Inventory</a>
+        and
+        <a href="https://thesevenpens.github.io/DrawTabDataExplorer/pen-inventory" target="_blank" rel="noopener">Pen Inventory</a>
+        sub-tabs instead.
+    </div>
 
     <h1>Drawing Tablet Inventory</h1>
 

@@ -1,5 +1,13 @@
 # Overview
 
+> **⚠ Deprecated** — this project has been replaced by
+> [DrawTabDataExplorer](https://thesevenpens.github.io/DrawTabDataExplorer/),
+> which offers a strict superset of features. Use the
+> [Tablet Inventory](https://thesevenpens.github.io/DrawTabDataExplorer/tablet-inventory)
+> and
+> [Pen Inventory](https://thesevenpens.github.io/DrawTabDataExplorer/pen-inventory)
+> sub-tabs instead. This document is kept for historical reference.
+
 DrawTabInventory is a single-page web app that displays a personal inventory of drawing tablets and stylus pens. It loads JSON data from the [DrawTabData](https://github.com/TheSevenPens/DrawTabData) repository (vendored as a git submodule at `data-repo/`) and renders it in two tabs: **Tablets** and **Pens**.
 
 ## Features
